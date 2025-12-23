@@ -13,6 +13,7 @@ const POKEMON_FIELDS = [
   { value: 'types', label: 'Type(s)', type: 'string' },
   { value: 'hp', label: 'HP', type: 'number' },
   { value: 'attack', label: 'Attack', type: 'number' },
+  { value: 'sprite', label: 'Sprite (Image URL)', type: 'string' },
   { value: 'defense', label: 'Defense', type: 'number' },
   { value: 'specialAttack', label: 'Special Attack', type: 'number' },
   { value: 'specialDefense', label: 'Special Defense', type: 'number' },
@@ -45,6 +46,7 @@ export function CSVUpload() {
     try {
       const csvHeaders = await parseCSVHeaders(selectedFile);
       setHeaders(csvHeaders);
+      console.log(headers);
       
       const initialMappings: CSVColumnMapping[] = csvHeaders.map((header) => ({
         csvHeader: header,
@@ -70,10 +72,10 @@ export function CSVUpload() {
       
       const fieldInfo = POKEMON_FIELDS.find((f) => f.value === value);
       if (fieldInfo) {
-        newMappings[index].dataType = fieldInfo.type as any;
+        newMappings[index].dataType = fieldInfo.type;
       }
-    } else if (field === 'dataType') {
-      newMappings[index].dataType = value as any;
+    } else if (field === 'string' || field === 'number') {
+      newMappings[index].dataType = field;
     }
     
     setMappings(newMappings);

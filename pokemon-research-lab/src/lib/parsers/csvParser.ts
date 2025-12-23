@@ -1,32 +1,26 @@
-
 // This module handles CSV file parsing using streaming
-// we process data in chunks instead of loading everything at once
 
 import Papa from 'papaparse';
 import { Pokemon, CSVColumnMapping } from '@/types/pokemon';
 
-export function parseCSVHeaders(
-  file: File
-): Promise<string[]> {
+// parsing the headers of the csv 
+export function parseCSVHeaders(file: File): Promise<string[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
-      preview: 1, 
+      preview: 1,
       complete: (results) => {
         if (results.data && results.data.length > 0) {
-          const headers = results.data[0] as string[];
-          resolve(headers);
+          resolve(results.data[0] as string[]);
         } else {
           reject(new Error('No headers found in CSV'));
         }
       },
-      error: (error) => {
-        reject(error);
-      },
+      error: (error) => reject(error),
     });
   });
 }
 
-// Parse the entire CSV file with column mapping
+// function to parse the csv
 export function parseCSVWithMapping(
   file: File,
   mappings: CSVColumnMapping[],
@@ -35,46 +29,37 @@ export function parseCSVWithMapping(
   return new Promise((resolve, reject) => {
     const results: Pokemon[] = [];
     let rowCount = 0;
-    
+
     Papa.parse(file, {
-      header: true, 
-      dynamicTyping: true, 
+      header: true,
+      dynamicTyping: true,
       skipEmptyLines: true,
       chunk: (chunk, parser) => {
-        // Process each chunk of data
         try {
-          const chunkResults = chunk.data.map((row: any) => {
-            return transformCSVRowToPokemon(row, mappings, rowCount++);
-          });
-          
+          const chunkResults = (chunk.data as Record<string, unknown>[]).map(
+            (row) => transformCSVRowToPokemon(row, mappings, rowCount++)
+          );
+
           results.push(...chunkResults);
-          
-          if (onProgress) {
-            onProgress(results.length);
-          }
+          onProgress?.(results.length);
         } catch (error) {
           parser.abort();
           reject(error);
         }
       },
-      complete: () => {
-        resolve(results);
-      },
-      error: (error) => {
-        reject(error);
-      },
+      complete: () => resolve(results),
+      error: (error) => reject(error),
     });
   });
 }
 
-// Transform a single CSV row into a Pokemon object based on mappings
+// function to transform every csv row to pokemon type
 function transformCSVRowToPokemon(
-  row: any,
+  row: Record<string, unknown>,
   mappings: CSVColumnMapping[],
   rowIndex: number
 ): Pokemon {
-
-  const pokemon: Pokemon = {
+  const pokemon: Pokemon & Record<string, unknown> = {
     id: rowIndex + 1,
     name: 'Unknown',
     sprite: null,
@@ -90,47 +75,53 @@ function transformCSVRowToPokemon(
   };
 
   mappings.forEach((mapping) => {
-    const value = row[mapping.csvHeader];
-    
-    if (value === undefined || value === null || value === '') {
-      return; 
-    }
-    
-    const convertedValue = convertValue(value, mapping.dataType);
-    
-    if (mapping.pokemonField === 'types' && typeof convertedValue === 'string') {
+    const rawValue = row[mapping.csvHeader];
+
+    if (rawValue === undefined || rawValue === null || rawValue === '') return;
+
+    const convertedValue = convertValue(rawValue, mapping.dataType);
+
+    if (
+      mapping.pokemonField === 'types' &&
+      typeof convertedValue === 'string'
+    ) {
       pokemon.types = convertedValue
         .split(/[,\/]/)
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
     } else {
-      (pokemon as any)[mapping.pokemonField] = convertedValue;
+      pokemon[mapping.pokemonField] = convertedValue;
     }
   });
-  
+
   return pokemon;
 }
 
+
+// function to convert the csv values
 function convertValue(
-  value: any,
+  value: unknown,
   dataType: 'string' | 'number' | 'boolean'
-): any {
+): string | number | boolean {
   switch (dataType) {
-    case 'number':
+    case 'number': {
       const num = Number(value);
-      return isNaN(num) ? 0 : num;
-    
-    case 'boolean':
+      return Number.isNaN(num) ? 0 : num;
+    }
+
+    case 'boolean': {
       if (typeof value === 'boolean') return value;
       const str = String(value).toLowerCase();
       return str === 'true' || str === '1' || str === 'yes';
-    
+    }
+
     case 'string':
     default:
       return String(value);
   }
 }
 
+// method for export the data to csv
 export function exportToCSV(
   pokemons: Pokemon[],
   customColumns: Array<{ id: string; name: string }>
@@ -139,10 +130,11 @@ export function exportToCSV(
     alert('No data to export');
     return;
   }
-  
+
   const baseColumns = [
     'id',
     'name',
+    'sprite',
     'types',
     'hp',
     'attack',
@@ -152,40 +144,35 @@ export function exportToCSV(
     'speed',
     'height',
     'weight',
-  ];
-  
-  const allColumns = [
-    ...baseColumns,
-    ...customColumns.map((c) => c.id),
-  ];
-  
-  const csvData = pokemons.map((pokemon) => {
-    const row: any = {};
-    
+  ] as const;
+
+  const allColumns = [...baseColumns, ...customColumns.map((c) => c.id)];
+
+  const csvData: Record<string, string | number>[] = pokemons.map((pokemon) => {
+    const row: Record<string, string | number> = {};
+
     allColumns.forEach((col) => {
       if (col === 'types') {
         row[col] = pokemon.types.join(', ');
       } else {
-        row[col] = pokemon[col] !== undefined ? pokemon[col] : '';
+        const value = (pokemon as Record<string, unknown>)[col];
+        row[col] = value !== undefined ? String(value) : '';
       }
     });
-    
+
     return row;
   });
-  
 
-  const csv = Papa.unparse(csvData, {
-    columns: allColumns,
-  });
+  const csv = Papa.unparse(csvData, { columns: allColumns });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
-  
-  link.setAttribute('href', url);
-  link.setAttribute('download', `pokemon_data_${Date.now()}.csv`);
+
+  link.href = url;
+  link.download = `pokemon_data_${Date.now()}.csv`;
   link.style.visibility = 'hidden';
-  
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

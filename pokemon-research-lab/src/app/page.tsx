@@ -1,4 +1,4 @@
-// the main page that brings all components together
+// this is the main page that brings all components together
 //  entry point of our application
 
 'use client';
@@ -115,8 +115,8 @@ export default function Home() {
       
       {/* Footer */}
       <footer className="mt-12 py-6 text-center text-gray-600 text-sm">
-        <p>Built with Next.js, TypeScript, TanStack Table, and Zustand</p>
-        <p className="mt-1">Data from PokeAPI.co</p>
+        <p>Built with Next.js</p>
+        <p className="mt-1">Faishal Rahman</p>
       </footer>
     </main>
   );

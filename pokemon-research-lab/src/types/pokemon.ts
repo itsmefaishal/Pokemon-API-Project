@@ -32,7 +32,7 @@ export interface Pokemon {
   speed: number;
   height: number;
   weight: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PokeAPIResponse {
