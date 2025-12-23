@@ -1,5 +1,5 @@
 Pokemon Research Lab
-Live Link:
+Live Link: https://pokemon-api-project-bay.vercel.app/
 
 A high-performance web app for analyzing Pokemon data. Handles 1000+ rows smoothly with virtualized tables.
 
