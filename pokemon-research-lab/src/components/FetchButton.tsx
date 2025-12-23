@@ -26,7 +26,7 @@ export function FetchButton() {
                    hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed
                    transition-colors duration-200 shadow-md hover:shadow-lg"
       >
-        {isLoading ? 'Fetching...' : 'Fetch Full Pokedex Dataset'}
+        {isLoading ? 'Fetching...' : 'Fetch Full Pokemon Dataset'}
       </button>
       
       {isLoading && progress.total > 0 && (
