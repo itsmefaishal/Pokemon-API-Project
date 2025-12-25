@@ -434,8 +434,8 @@ export function PokemonTable() {
   return (
     <div className="space-y-4">
       {/* Pagination buttons */}
-      <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
